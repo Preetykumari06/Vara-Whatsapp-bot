@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel to JSON Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        #xlx_json {
+            width: 100%;
+            height: 300px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Water Usage Data</h1>
+    <form>
+        <input id="upload" type="file" name="files[]" />
+    </form>
+    <textarea class="form-control" rows="35" cols="120" id="xlx_json"></textarea>
+
+    <script>
+        // Function to handle file input and convert Excel to JSON
+        class ExcelToJSON {
+            parseExcel(file) {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+
+                    // Iterate through all sheets
+                    workbook.SheetNames.forEach(sheetName => {
+                        // Convert sheet to JSON
+                        const sheet = workbook.Sheets[sheetName];
+                        const rowObjects = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        const jsonObject = JSON.stringify(rowObjects, null, 2);
+
+                        // Log and display JSON
+                        console.log(jsonObject);
+                        document.getElementById('xlx_json').value = jsonObject;
+                    });
+                };
+
+                reader.onerror = (ex) => {
+                    console.error('Error reading file:', ex);
+                };
+
+                reader.readAsBinaryString(file);
+            }
+        }
+
+        // Function to handle file selection
+        function handleFileSelect(evt) {
+            const files = evt.target.files; // FileList object
+            if (files.length > 0) {
+                const xl2json = new ExcelToJSON();
+                xl2json.parseExcel(files[0]);
+            }
+        }
+
+        // Function to fetch data from the backend API
+        async function fetchData() {
+            try {
+                // Update URL to your ngrok URL
+                const response = await fetch('https://8c47-2405-201-a415-6a7c-3d9d-85f9-f3f0-43b4.ngrok-free.app/api/data');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                document.getElementById('xlx_json').value = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('xlx_json').value = 'Error fetching data: ' + error.message;
+            }
+        }
+
+        // Add event listener for file input change
+        document.getElementById('upload').addEventListener('change', handleFileSelect, false);
+
+        // Fetch data on page load
+        fetchData();
+    </script>
+</body>
+</html>
