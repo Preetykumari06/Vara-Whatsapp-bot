@@ -10,16 +10,17 @@ async function readExcelFile() {
     try {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.readFile(dataFilePath);
+        const worksheet = workbook.getWorksheet(1);
+        // const worksheet = workbook.worksheets[0];
 
-        // Assuming you want to read data from the first worksheet
-        const worksheet = workbook.worksheets[0];
+        console.log('Sheet Name:', worksheet.name);
+        console.log('Row Count:', worksheet.rowCount);
 
-        // Convert worksheet data to an array of objects
         const data = [];
+        
         worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
             if (rowNumber === 1) {
-                // Assuming the first row is the header row
-                data.headers = row.values.slice(1); // Remove the first element which is undefined
+                data.headers = row.values.slice(1); // Skip the first empty cell
             } else {
                 const rowData = {};
                 row.values.slice(1).forEach((cell, index) => {
